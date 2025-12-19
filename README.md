@@ -1,2 +1,6 @@
 # streamlitapp
-streamlit webb application
+This is my first streamlit webb application
+
+
+# Authors :
+* Daniel Garcin (dgarcin@gmail.com)
