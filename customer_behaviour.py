@@ -63,3 +63,16 @@ else:
 # Afficher un aperçu des données
 st.subheader("Aperçu des données")
 st.dataframe(df.head(10))
+
+
+# Statistiques générales
+st.header("Statistiques générales")
+
+# Utiliser DuckDB pour les statistiques générales sur les comprtements d'achat
+df_total_buyers = conn.execute('select  count(*) as total_buyers from comportement_achat').fetchdf()
+df_total_buyers_male = conn.execute("select count(*) as total_buyers_male from comportement_achat where Gender = 'Male' ").fetchdf()
+df_total_buyers_female = conn.execute("select count(*) as total_buyers_female  from comportement_achat where Gender = 'Female' ").fetchdf()
+
+st.write(df_total_buyers)
+st.write(df_total_buyers_male)
+st.write(df_total_buyers_female)
