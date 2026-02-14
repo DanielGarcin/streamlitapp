@@ -156,3 +156,31 @@ fig.add_trace(go.Bar(
     ))
 
 st.plotly_chart(fig, use_container_width=True)
+
+
+
+# Créer une requête pour obtenir les données croisées
+buyers_age = conn.execute("""
+    SELECT 
+        
+        CASE 
+            WHEN Age < 10 THEN '0-9'
+            WHEN Age < 20 THEN '10-19'
+            WHEN Age < 30 THEN '20-29'
+            WHEN Age < 40 THEN '30-39'
+            WHEN Age < 50 THEN '40-49'
+            WHEN Age < 60 THEN '50-59'
+            WHEN Age < 70 THEN '60-69'
+            WHEN Age < 80 THEN '70-79'
+            WHEN Age IS NULL THEN 'Inconnu'
+            ELSE '80+'
+        END as groupe_age,
+        
+        COUNT(*) as total
+    FROM comportement_achat
+    GROUP BY groupe_age
+    ORDER BY groupe_age
+""").fetchdf()
+
+st.write(buyers_age)
+
