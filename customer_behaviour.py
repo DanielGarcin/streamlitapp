@@ -79,4 +79,80 @@ col2.metric("Nombre total d'acheteurs hommes", df_total_buyers_male['total_buyer
 col3.metric("Nombre total d'acheteurs femmes", df_total_buyers_female['total_buyers_female'][0])
 
 
+# Création graphique
+st.header("Analyse des acheteurs en fonction d'unbe soubscrition")
 
+# 1. Graphique du nombre d'acheteurs en fonction d'un abonnement ou non
+buyers_by_subscription = conn.execute("""
+    SELECT 
+        "Subscription Status",
+        SUM(CASE WHEN "Subscription Status" = 'Yes' THEN 1 ELSE 0 END) as buyers_with_subscription,
+        SUM(CASE WHEN "Subscription Status" = 'No' THEN 1 ELSE 0 END) as buyers_without_subscription,
+        COUNT(*) as total
+    FROM comportement_achat
+    GROUP BY 1
+    ORDER BY 1
+                                      
+                                      
+""").fetchdf()
+
+ # Créer un graphique à barres en fonction de subscription ou non
+fig = go.Figure()
+    
+fig.add_trace(go.Bar(
+        x=buyers_by_subscription["Subscription Status"],
+        y=buyers_by_subscription["buyers_with_subscription"],
+        name='With Subscription',
+         text=buyers_by_subscription["buyers_with_subscription"],
+        marker_color='green'
+    ))
+
+fig.add_trace(go.Bar(
+        x=buyers_by_subscription["Subscription Status"],
+        y=buyers_by_subscription["buyers_without_subscription"],
+        name='Witout Subscription',
+        text=buyers_by_subscription["buyers_without_subscription"],
+        marker_color='red'
+    ))
+
+st.plotly_chart(fig, use_container_width=True)
+
+
+
+
+st.header("Analyse des acheteurs en fonction d'un discount")
+
+buyers_with_discount = conn.execute("""
+    SELECT 
+        "Discount Applied",
+        SUM(CASE WHEN "Discount Applied" = 'Yes' THEN 1 ELSE 0 END) as buyers_with_discount,
+        SUM(CASE WHEN "Discount Applied" = 'No' THEN 1 ELSE 0 END) as buyers_without_discount,
+        COUNT(*) as total
+    FROM comportement_achat
+    GROUP BY 1
+    ORDER BY 1
+                                      
+                                      
+""").fetchdf()
+
+
+# Créer un graphique à barres en fonction de discount ou non
+fig = go.Figure()
+    
+fig.add_trace(go.Bar(
+        x=buyers_with_discount["Discount Applied"],
+        y=buyers_with_discount["buyers_with_discount"],
+        name='With Discount',
+         text=buyers_with_discount["buyers_with_discount"],
+        marker_color='green'
+    ))
+
+fig.add_trace(go.Bar(
+        x=buyers_with_discount["Discount Applied"],
+        y=buyers_with_discount["buyers_without_discount"],
+        name='Without Discount',
+        text=buyers_with_discount["buyers_without_discount"],
+        marker_color='red'
+    ))
+
+st.plotly_chart(fig, use_container_width=True)
