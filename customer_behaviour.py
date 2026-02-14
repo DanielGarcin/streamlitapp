@@ -17,12 +17,49 @@ st.write("Cette application analyse les données de comportement d'achat en util
 # Fonction pour charger les données de démonstration de comprtement d'achat
 def charger_donnees_comportement_achat():
     # URL des données de comportement d'achat
-    url = "https://www.kaggle.com/datasets/ayeshasiddiqa123/customer-shopping-behavior-dataset"
+
+    url = "https://github.com/DanielGarcin/streamlitapp/blob/main/DATA/shopping_behavior_updated.csv?raw=true"
     return pd.read_csv(url)
 
 # Sidebar pour le chargement des données
 st.sidebar.title("Source de données")
 source_option = st.sidebar.radio(
     "Choisir la source de données:",
-    ["Données Titanic de démonstration", "Télécharger un fichier CSV"]
+    ["Données de comportement d'achats", "Télécharger un fichier CSV"]
 )
+
+# Initialiser la connexion DuckDB
+conn = duckdb.connect(database=':memory:', read_only=False)
+
+# Obtenir les données
+if source_option == "Données de comportement d'achats":
+    df = charger_donnees_comportement_achat()
+    st.sidebar.success("Données de comportement d'achats chargées!")
+    
+    # Enregistrer les données dans DuckDB
+    conn.execute("CREATE TABLE IF NOT EXISTS comportement_achat AS SELECT * FROM df")
+    
+else:
+    uploaded_file = st.sidebar.file_uploader("Télécharger un fichier CSV", type=["csv"])
+    if uploaded_file is not None:
+        # Sauvegarder temporairement le fichier
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.csv') as tmp_file:
+            tmp_file.write(uploaded_file.getvalue())
+            tmp_path = tmp_file.name
+        
+        # Créer une table à partir du CSV avec DuckDB
+        conn.execute(f"CREATE TABLE IF NOT EXISTS comportement_achat AS SELECT * FROM read_csv_auto('{tmp_path}')")
+        
+        # Charger les données pour affichage
+        df = conn.execute("SELECT * FROM comportement_achat").fetchdf()
+        st.sidebar.success(f"{len(df)} achats réalisés!")
+        
+        # Supprimer le fichier temporaire
+        os.unlink(tmp_path)
+    else:
+        st.info("Veuillez télécharger un fichier CSV ou utiliser les données de démonstration.")
+        st.stop()
+
+# Afficher un aperçu des données
+st.subheader("Aperçu des données")
+st.dataframe(df.head(10))
