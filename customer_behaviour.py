@@ -17,7 +17,6 @@ st.write("Cette application analyse les données de comportement d'achat en util
 # Fonction pour charger les données de démonstration de comprtement d'achat
 def charger_donnees_comportement_achat():
     # URL des données de comportement d'achat
-
     url = "https://github.com/DanielGarcin/streamlitapp/blob/main/DATA/shopping_behavior_updated.csv?raw=true"
     return pd.read_csv(url)
 
@@ -82,9 +81,12 @@ col5.metric("Pourcentage d'acheteurs femme", df_total_buyers_female['total_buyer
 
 
 # Création graphique
-st.header("Analyse des acheteurs en fonction d'une soubscrition")
+
 
 # 1. Graphique du nombre d'acheteurs en fonction d'un abonnement ou non
+
+st.header("Analyse des acheteurs en fonction d'une soubscrition")
+
 buyers_by_subscription = conn.execute("""
     SELECT 
         "Subscription Status",
@@ -118,7 +120,7 @@ fig.add_trace(go.Bar(
 st.plotly_chart(fig, use_container_width=True)
 
 
-
+# Créer un graphique à barres en fonction de discount ou non
 
 st.header("Analyse des acheteurs en fonction d'un discount")
 
@@ -130,13 +132,11 @@ buyers_with_discount = conn.execute("""
         COUNT(*) as total
     FROM comportement_achat
     GROUP BY 1
-    ORDER BY 1
-                                      
-                                      
+    ORDER BY 1                                      
 """).fetchdf()
 
 
-# Créer un graphique à barres en fonction de discount ou non
+
 fig = go.Figure()
     
 fig.add_trace(go.Bar(
@@ -160,6 +160,23 @@ st.plotly_chart(fig, use_container_width=True)
 
 
 # Créer une requête pour obtenir les données croisées
+
+# Transformer la table duckdb comportement_achat en dataframe pandas
+df_comportement_achat = conn.execute("SELECT * FROM comportement_achat").fetchdf()
+
+
+# filtrage sur la colonne 'Payment Method'
+payment_method_list = df_comportement_achat["Payment Method"].unique()
+payment_method_selection = st.multiselect(
+    "Sélectionnez les moyens de paiement",
+    options=payment_method_list,
+    default=payment_method_list
+)
+
+# Appliquer le filtre sur le DataFrame
+df_filtre = df_comportement_achat[df_comportement_achat["Payment Method"].isin(payment_method_selection)]
+
+ 
 buyers_age = conn.execute("""
     SELECT 
         
@@ -175,12 +192,44 @@ buyers_age = conn.execute("""
             WHEN Age IS NULL THEN 'Inconnu'
             ELSE '80+'
         END as groupe_age,
-        
         COUNT(*) as total
-    FROM comportement_achat
+    FROM df_filtre
     GROUP BY groupe_age
     ORDER BY groupe_age
 """).fetchdf()
 
-st.write(buyers_age)
 
+# Si nécessaire, on s'assure que les tranches d'âge sont dans le bon ordre
+ordre = ['0-9','10-19','20-29','30-39','40-49',
+         '50-59','60-69','70-79','80+','Inconnu']
+
+buyers_age["groupe_age"] = pd.Categorical(
+    buyers_age["groupe_age"],
+    categories=ordre,
+    ordered=True
+)
+
+buyers_age = buyers_age.sort_values("groupe_age")
+
+# Création de la figure
+fig = go.Figure()
+
+fig.add_trace(go.Bar(
+    x=buyers_age["groupe_age"],
+    y=buyers_age["total"],
+    name='Nombre d\'acheteurs',
+    text=buyers_age["total"],       # Affiche le nombre au-dessus des barres
+    marker_color='blue'
+))
+
+# Personnalisation du layout
+fig.update_layout(
+    title="Nombre d'acheteurs par tranche d'âge",
+    xaxis_title="Tranche d'âge",
+    yaxis_title="Nombre d'acheteurs",
+    xaxis_tickangle=-45,          # Incline les labels pour mieux les voir
+    template="plotly_white"
+)
+
+# Affichage dans Streamlit
+st.plotly_chart(fig, use_container_width=True)
