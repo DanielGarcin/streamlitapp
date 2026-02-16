@@ -73,14 +73,16 @@ df_total_buyers = conn.execute('select  count(*) as total_buyers from comporteme
 df_total_buyers_male = conn.execute("select count(*) as total_buyers_male from comportement_achat where Gender = 'Male' ").fetchdf()
 df_total_buyers_female = conn.execute("select count(*) as total_buyers_female  from comportement_achat where Gender = 'Female' ").fetchdf()
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4, col5 = st.columns(5)
 col1.metric("Nombre total d'acheteurs", df_total_buyers['total_buyers'][0])
 col2.metric("Nombre total d'acheteurs hommes", df_total_buyers_male['total_buyers_male'][0])
 col3.metric("Nombre total d'acheteurs femmes", df_total_buyers_female['total_buyers_female'][0])
+col4.metric("Pourcentage d'acheteurs hommes", df_total_buyers_male['total_buyers_male'][0]/df_total_buyers['total_buyers'][0])
+col5.metric("Pourcentage d'acheteurs femme", df_total_buyers_female['total_buyers_female'][0]/df_total_buyers['total_buyers'][0])
 
 
 # Création graphique
-st.header("Analyse des acheteurs en fonction d'unbe soubscrition")
+st.header("Analyse des acheteurs en fonction d'une soubscrition")
 
 # 1. Graphique du nombre d'acheteurs en fonction d'un abonnement ou non
 buyers_by_subscription = conn.execute("""
@@ -91,9 +93,7 @@ buyers_by_subscription = conn.execute("""
         COUNT(*) as total
     FROM comportement_achat
     GROUP BY 1
-    ORDER BY 1
-                                      
-                                      
+    ORDER BY 1                                   
 """).fetchdf()
 
  # Créer un graphique à barres en fonction de subscription ou non
